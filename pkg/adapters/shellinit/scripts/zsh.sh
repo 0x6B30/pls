@@ -1,7 +1,20 @@
-pls() {
+_pls_cd() {
   local target
-  target="$(command pls-cli jump "$@")" || return
+  target="$(command pls-cli "$@")" || return
   builtin cd -- "$target"
+}
+
+pls() {
+  if [[ "${1:-}" == jump ]]; then
+    shift
+    _pls_cd jump "$@"
+    return
+  fi
+  _pls_cd open "$@"
+}
+
+plsj() {
+  _pls_cd jump "$@"
 }
 
 _pls_record_visit() {

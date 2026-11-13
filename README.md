@@ -3,19 +3,23 @@
 Create, clone, or jump to a folder and `cd` into it, in one command.
 
 ```sh
-pls a/b/c                          # mkdir -p a/b/c && cd a/b/c
-pls git@github.com:me/tool.git     # git clone ... && cd tool   (just cd if already cloned)
+pls a/b/c                          # mkdir -p a/b/c && cd a/b/c   (just cd if it exists)
+pls git@github.com:me/tool.git     # git clone ... && cd tool     (just cd if already cloned)
 pls https://github.com/me/tool x   # clone into ./x
-pls api                            # jump to the most used/recent visited folder named like "api"
-pls -n api                         # always create ./api, never jump
+pls jump api                       # jump to the most used/recent visited folder named like "api"
+plsj api                           # same as pls jump
 ```
+
+`pls` never jumps and `pls jump` never creates. A jump with no match fails instead of making a folder. To create a folder literally named `jump`, use `pls ./jump`.
 
 ## Install
 
+Requires Go and git.
+
 ```sh
-./install.sh            # detects your shell from $SHELL
-./install.sh bash       # or pick one: zsh | bash
-PLS_VERSION=v0.1.0 ./install.sh
+curl -fsSL https://0x6b30.github.io/pls/install.sh | sh
+curl -fsSL https://0x6b30.github.io/pls/install.sh | sh -s -- bash   # force a shell
+curl -fsSL https://0x6b30.github.io/pls/install.sh | PLS_VERSION=v0.1.0 sh
 ```
 
 The script runs `go install github.com/0x6B30/pls/cmd/pls-cli@latest` and adds this to your rc file:
@@ -29,21 +33,21 @@ eval "$(pls-cli init zsh)"
 A program can't change its parent shell's directory, so the work is split:
 
 - `pls-cli`, the Go binary, decides where to go and prints the absolute path.
-- `pls`, a small shell function from `pls-cli init`, runs the binary and `cd`s into what it printed. A cd hook calls `pls-cli add "$PWD"` on every directory change, which is how partial-name jumps learn.
+- `pls` / `plsj`, small shell functions from `pls-cli init`, run `pls-cli open` or `pls-cli jump` and `cd` into what it printed. A cd hook calls `pls-cli add "$PWD"` on every directory change, which is how `pls jump` learns.
 
 How a target is resolved: [pkg/services/resolver/README.md](pkg/services/resolver/README.md).
 
 ## Layout
 
 ```
-cmd/pls-cli/          CLI entrypoint: wiring and subcommands (jump, add, init)
+cmd/pls-cli/          CLI entrypoint: wiring and subcommands (open, jump, add, init)
 pkg/domains/history   visit model, frecency, aging rules
 pkg/utils/giturl      recognising git URLs, deriving the repo folder name
 pkg/infra/dirs        filesystem checks and mkdir
 pkg/infra/gitcli      runs git clone
 pkg/infra/historystore  visit history on disk
-pkg/services/matcher  picks the best visited folder for a partial name
-pkg/services/resolver turns a target into a folder (clone / existing / history / create)
+pkg/services/matcher  picks the best visited folder for a partial name (pls jump)
+pkg/services/resolver turns a target into a folder (clone / existing / create)
 pkg/adapters/shellinit  shell wrapper scripts (zsh, bash)
 ```
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/0x6B30/pls/pkg/infra/dirs"
 	"github.com/0x6B30/pls/pkg/infra/gitcli"
-	"github.com/0x6B30/pls/pkg/services/matcher"
 )
 
 var (
@@ -16,10 +15,9 @@ var (
 )
 
 type Request struct {
-	Target      string
-	CloneDir    string
-	Cwd         string
-	ForceCreate bool
+	Target   string
+	CloneDir string
+	Cwd      string
 }
 
 type Resolver interface {
@@ -27,18 +25,14 @@ type Resolver interface {
 }
 
 type Dependencies struct {
-	Cloner  gitcli.Cloner
-	Dirs    dirs.Dirs
-	Matcher matcher.Matcher
+	Cloner gitcli.Cloner
+	Dirs   dirs.Dirs
 }
 
 func New(deps Dependencies) Resolver {
-	create := createDir{dirs: deps.Dirs}
 	return &chain{strategies: []strategy{
 		cloneRepo{cloner: deps.Cloner, dirs: deps.Dirs},
-		forcedCreate{create: create},
 		existingDir{dirs: deps.Dirs},
-		historyMatch{matcher: deps.Matcher},
-		create,
+		createDir{dirs: deps.Dirs},
 	}}
 }

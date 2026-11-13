@@ -14,6 +14,7 @@ import (
 
 type app struct {
 	resolver resolver.Resolver
+	matcher  matcher.Matcher
 	visits   historystore.Recorder
 	scripts  shellinit.Generator
 	stdout   io.Writer
@@ -31,10 +32,10 @@ func newApp(stdout, stderr io.Writer) (*app, error) {
 
 	return &app{
 		resolver: resolver.New(resolver.Dependencies{
-			Cloner:  gitcli.New(stderr),
-			Dirs:    directories,
-			Matcher: matcher.New(store, directories, time.Now),
+			Cloner: gitcli.New(stderr),
+			Dirs:   directories,
 		}),
+		matcher: matcher.New(store, directories, time.Now),
 		visits:  store,
 		scripts: shellinit.New(),
 		stdout:  stdout,

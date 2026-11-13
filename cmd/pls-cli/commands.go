@@ -15,7 +15,8 @@ const (
 )
 
 const usage = `usage:
-  pls-cli jump [-n] <dir | partial-name | git-url [clone-dir]>
+  pls-cli open <dir | git-url [clone-dir]>
+  pls-cli jump <partial-name>
   pls-cli add <absolute-path>
   pls-cli init <zsh | bash>
 `
@@ -26,6 +27,7 @@ type command func(ctx context.Context, args []string) error
 
 func (a *app) commands() map[string]command {
 	return map[string]command{
+		"open": a.open,
 		"jump": a.jump,
 		"add":  a.add,
 		"init": a.printShellInit,

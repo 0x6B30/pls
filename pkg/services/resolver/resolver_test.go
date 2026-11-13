@@ -7,7 +7,6 @@ import (
 
 	"github.com/0x6B30/pls/pkg/infra/dirs"
 	"github.com/0x6B30/pls/pkg/infra/gitcli"
-	"github.com/0x6B30/pls/pkg/services/matcher"
 )
 
 const cwd = "/work"
@@ -16,7 +15,6 @@ type fakes struct {
 	existing map[string]bool
 	created  []string
 	cloned   []string
-	match    string
 }
 
 func (f *fakes) resolver() Resolver {
@@ -29,12 +27,6 @@ func (f *fakes) resolver() Resolver {
 			ExistsFunc: func(path string) bool { return f.existing[path] },
 			EnsureFunc: func(path string) error { f.created = append(f.created, path); return nil },
 		},
-		Matcher: &matcher.Mock{BestFunc: func(string, string) (string, error) {
-			if f.match == "" {
-				return "", matcher.ErrNoMatch
-			}
-			return f.match, nil
-		}},
 	})
 }
 
@@ -68,38 +60,22 @@ func TestReusesAlreadyClonedRepo(t *testing.T) {
 	}
 }
 
-func TestExistingDirWinsOverHistory(t *testing.T) {
-	f := &fakes{existing: map[string]bool{"/work/api": true}, match: "/elsewhere/api"}
+func TestReturnsExistingDirWithoutCreating(t *testing.T) {
+	f := &fakes{existing: map[string]bool{"/work/api": true}}
 
-	if got := resolve(t, f, Request{Target: "api"}); got != "/work/api" {
-		t.Fatalf("got %q, want /work/api", got)
-	}
-}
+	got := resolve(t, f, Request{Target: "api"})
 
-func TestHistoryMatchForPartialName(t *testing.T) {
-	f := &fakes{match: "/elsewhere/api-server"}
-
-	if got := resolve(t, f, Request{Target: "api"}); got != "/elsewhere/api-server" {
-		t.Fatalf("got %q", got)
-	}
-}
-
-func TestPathLikeTargetSkipsHistory(t *testing.T) {
-	f := &fakes{match: "/elsewhere/c"}
-
-	got := resolve(t, f, Request{Target: "a/b/c"})
-
-	if got != "/work/a/b/c" || len(f.created) != 1 {
+	if got != "/work/api" || len(f.created) != 0 {
 		t.Fatalf("got %q, created %v", got, f.created)
 	}
 }
 
-func TestForceCreateIgnoresHistory(t *testing.T) {
-	f := &fakes{match: "/elsewhere/api"}
+func TestCreatesMissingDir(t *testing.T) {
+	f := &fakes{}
 
-	got := resolve(t, f, Request{Target: "api", ForceCreate: true})
+	got := resolve(t, f, Request{Target: "a/b/c"})
 
-	if got != "/work/api" || len(f.created) != 1 {
+	if got != "/work/a/b/c" || len(f.created) != 1 {
 		t.Fatalf("got %q, created %v", got, f.created)
 	}
 }

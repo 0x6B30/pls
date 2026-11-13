@@ -1,8 +1,11 @@
 #!/bin/sh
+# curl -fsSL https://0x6b30.github.io/pls/install.sh | sh
+# curl -fsSL https://0x6b30.github.io/pls/install.sh | sh -s -- bash
 set -eu
 
 MODULE="github.com/0x6B30/pls/cmd/pls-cli"
 VERSION="${PLS_VERSION:-latest}"
+INSTALL_URL="https://0x6b30.github.io/pls/install.sh"
 
 log() { printf 'pls: %s\n' "$*"; }
 fail() { printf 'pls: %s\n' "$*" >&2; exit 1; }
@@ -15,7 +18,7 @@ detect_shell() {
   shell_name="${1:-$(basename "${SHELL:-}")}"
   case "$shell_name" in
     zsh | bash) printf '%s' "$shell_name" ;;
-    *) fail "unsupported shell '$shell_name', run: ./install.sh zsh|bash" ;;
+    *) fail "unsupported shell '$shell_name', run: curl -fsSL $INSTALL_URL | sh -s -- zsh|bash" ;;
   esac
 }
 
@@ -28,8 +31,18 @@ rc_file_for() {
 
 go_bin_dir() {
   bin_dir="$(go env GOBIN)"
-  [ -n "$bin_dir" ] || bin_dir="$(go env GOPATH)/bin"
+  if [ -z "$bin_dir" ]; then
+    gopath="$(go env GOPATH)"
+    bin_dir="${gopath%%:*}/bin"
+  fi
   printf '%s' "$bin_dir"
+}
+
+is_on_path() {
+  case ":$PATH:" in
+    *":$1:"* | *":$1/:"*) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 install_binary() {
@@ -49,10 +62,7 @@ hook_rc_file() {
 
   {
     printf '\n# pls\n'
-    case ":$PATH:" in
-      *":$bin_dir:"*) ;;
-      *) printf 'export PATH="$PATH:%s"\n' "$bin_dir" ;;
-    esac
+    is_on_path "$bin_dir" || printf 'export PATH="$PATH:%s"\n' "$bin_dir"
     printf 'eval "$(pls-cli init %s)"\n' "$shell_name"
   } >>"$rc_file"
   log "added pls to $rc_file"

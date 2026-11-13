@@ -11,3 +11,12 @@ Runtime tools called by the binary:
 | Tool  | Used by          | Why                    |
 | ----- | ---------------- | ---------------------- |
 | `git` | `pkg/infra/gitcli` | cloning repositories |
+
+GitHub Actions used by `.github/workflows/pages.yml`, which publishes `install.sh`:
+
+| Action                          | Version |
+| ------------------------------- | ------- |
+| `actions/checkout`              | v4      |
+| `actions/configure-pages`       | v5      |
+| `actions/upload-pages-artifact` | v3      |
+| `actions/deploy-pages`          | v4      |

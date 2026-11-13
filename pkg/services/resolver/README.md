@@ -1,16 +1,14 @@
 # resolver
 
-Turns what the user typed into an absolute folder path. It tries a chain of strategies in order, and the first one that handles the request wins.
+Turns what the user typed after `pls` into an absolute folder path. It tries a chain of strategies in order, and the first one that handles the request wins.
 
-| # | Strategy       | Handles when                               | Does                                  |
-| - | -------------- | ------------------------------------------ | ------------------------------------- |
-| 1 | `cloneRepo`    | target starts with `git@`, `https://`, ... | reuses the folder if it exists, otherwise clones |
-| 2 | `forcedCreate` | `-n` was passed                            | `mkdir -p`                            |
-| 3 | `existingDir`  | target is an existing folder               | returns it                            |
-| 4 | `historyMatch` | target has no `/` and a visited folder matches | returns the best match            |
-| 5 | `createDir`    | always (fallback)                          | `mkdir -p`                            |
+| # | Strategy      | Handles when                               | Does                                  |
+| - | ------------- | ------------------------------------------ | ------------------------------------- |
+| 1 | `cloneRepo`   | target starts with `git@`, `https://`, ... | reuses the folder if it exists, otherwise clones |
+| 2 | `existingDir` | target is an existing folder               | returns it                            |
+| 3 | `createDir`   | always (fallback)                          | `mkdir -p`                            |
 
-A target with a `/` in it is treated as a path, never a search, so `pls a/b/c` always creates `a/b/c` rather than jumping to some other `c`.
+The resolver never looks at visit history. Jumping to a visited folder is a separate command (`pls jump`) that uses `pkg/services/matcher`.
 
 ## Adding behaviour
 

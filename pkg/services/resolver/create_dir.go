@@ -17,14 +17,3 @@ func (s createDir) resolve(_ context.Context, req Request) (string, bool, error)
 	}
 	return path, true, nil
 }
-
-type forcedCreate struct {
-	create createDir
-}
-
-func (s forcedCreate) resolve(ctx context.Context, req Request) (string, bool, error) {
-	if !req.ForceCreate {
-		return "", false, nil
-	}
-	return s.create.resolve(ctx, req)
-}
